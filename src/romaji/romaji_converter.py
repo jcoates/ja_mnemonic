@@ -13,10 +13,15 @@ def romaji_standardization(word: str) -> str:
     m_swaps = ['mm', 'mb', 'mp']
     two_swaps = {
         "si":"shi", "tu":"tsu", "ti":"chi", "hu":"fu", "zi":"ji",
-        "dz":"d", "zy":"j", "jy":"j", "sy":"sh", "ty":"ch"
+        "dz":"d", "zy":"j", "jy":"j", "sy":"sh", "ty":"ch",
+        "oh":"ou", # this is a long vowel but it's two letters long
+        "sh":"sh" # this is to prevent making shu->sfu
     }
     # Technically ō could mean oo but we can't know that in this direction
-    long_vowels = {"ō": "ou", "ô": "ou", "ū": "uu", "û": "uu"}
+    long_vowels = {
+        "ō": "ou", "ô": "ou", "ū": "uu", "û": "uu", "ē": "ee", "ê":"ee",
+        "ā": "aa", "â": "aa", "ī": "ii", "î":"ii" # I've never seen these used in names but for completeness sake
+    }
     while i < len(lowered):
         if i+1 < len(lowered):
             first_two = lowered[i:i+2]
@@ -42,7 +47,7 @@ def romaji_to_hiragana(word: str) -> str:
     i = 0
     by_char = []
     VOWELS = ['a', 'e', 'i', 'o', 'u']
-    CONSONANTS = ['k', 's', 't', 'n', 'h', 'f', 'v', 'm', 'y', 'r', 'g', 'z', 'j', 'z', 'd', 'b', 'p']
+    CONSONANTS = ['k', 's', 't', 'n', 'h', 'f', 'v', 'm', 'y', 'r', 'g', 'z', 'j', 'z', 'd', 'b', 'p', 'w']
     while i < len(arr_clean):
         match arr_clean[i:]:
             case [vowel, *rest] if vowel in VOWELS:

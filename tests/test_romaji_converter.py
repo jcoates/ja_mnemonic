@@ -13,7 +13,10 @@ from romaji.romaji_converter import romaji_standardization, romaji_to_hiragana
     ("Gumma", "gunma"),
     ("Shimbashi","shinbashi"),
     ("Syôzyôkôkantyô", "shoujoukoukanchou"),
-    ("Jyousuke", "jousuke")
+    ("Jyousuke", "jousuke"),
+    ("Kobayakawa", "kobayakawa"),
+    ("Ohta", "outa"),
+    ("Eishun", "eishun")
 ])
 def test_romaji_normalizer(test_input,expected):
     res = romaji_standardization(test_input)
@@ -27,7 +30,9 @@ def test_romaji_normalizer(test_input,expected):
     ("Jun'ichi", "じゅんいち"),
     ("Kōzō", "こうぞう"),
     ("Atsushi", "あつし"),
-    ("Kyōko", "きょうこ")
+    ("Kyōko", "きょうこ"),
+    ("Kobayakawa", "こばやかわ"),
+    ("Ohta", "おうた")
 ])
 def test_romaji_to_hiragana(test_input, expected):
     res = romaji_to_hiragana(test_input)
