@@ -8,58 +8,31 @@ def romaji_standardization(word: str) -> str:
     """This mostly makes nihon-shiki into hepburn, which is a loss of info technically."""
 
     res = ""
-    arr_word = list(word.lower())
+    lowered = word.lower()
     i = 0
-    while i < len(arr_word):
-        match arr_word[i:]:
-            case ['s', 'i', *rest]:
-                res += "shi"
-                i += 2
-            case ['t', 'u', *rest]:
-                res += "tsu"
-                i += 2
-            case ['t', 'i', *rest]:
-                res += "chi"
-                i += 2
-            case ['h', 'u', *rest]:
-                res += "fu"
-                i += 2
-            case ['z', 'i', *rest]:
-                res += "ji"
-                i += 2
-            case ['d', 'z', *rest]:
-                res += 'd'
-                i += 2
-            case ['z', 'y', *rest]:
-                res += "j"
-                i += 2
-            case ['j', 'y', *rest]:
-                res += "j"
-                i += 2
-            case ['s', 'y', *rest]:
-                res += "sh"
-                i += 2
-            case ['t', 'y', *rest]:
-                res += "ch"
-                i += 2
-            case ['ô', *rest]:
-                res += "ou"
-                i += 1
-            case ['ō', *rest]:
-                res += "ou"
-                i += 1
-            case ['û', *rest]:
-                res += "uu"
-                i += 1
-            case ['ū', *rest]:
-                res += "uu"
-                i += 1
-            case [c, peek, *rest] if c == 'm' and peek not in ['a', 'e', 'i', 'o', 'u', 'y']:
+    m_swaps = ['mm', 'mb', 'mp']
+    two_swaps = {
+        "si":"shi", "tu":"tsu", "ti":"chi", "hu":"fu", "zi":"ji",
+        "dz":"d", "zy":"j", "jy":"j", "sy":"sh", "ty":"ch"
+    }
+    # Technically ō could mean oo but we can't know that in this direction
+    long_vowels = {"ō": "ou", "ô": "ou", "ū": "uu", "û": "uu"}
+    while i < len(lowered):
+        if i+1 < len(lowered):
+            first_two = lowered[i:i+2]
+            if first_two in m_swaps:
                 res += 'n'
                 i += 1
-            case _:
-                res += arr_word[i]
-                i += 1
+                continue
+            if first_two in two_swaps:
+                res += two_swaps[first_two]
+                i += 2
+                continue
+        if lowered[i] in long_vowels:
+            res += long_vowels[lowered[i]]
+        else:
+            res += lowered[i]
+        i += 1
     return res
 
 def romaji_to_hiragana(word: str) -> str:
