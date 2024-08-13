@@ -220,16 +220,16 @@ def num_to_name(number: str, surnames: Dict[str, List[Tuple[str,str]]], given_na
     """
     results = []
     if number in given_names:
-        results.extend(g[0] for g in given_names[number])
+        results.extend(g for g in given_names[number])
     if number in surnames:
-        results.extend(s[0] for s in surnames[number])
+        results.extend(s for s in surnames[number])
     for i in range(1, len(number)):
         sur = number[:i]
         giv = number[i:]
         if sur in surnames and giv in given_names:
             for s in surnames[sur]:
                 for g in given_names[giv]:
-                    new_name = s[0]+" "+g[0]
+                    new_name = s+" "+g
                     if new_name not in results:
                         results.append(new_name)
     return results

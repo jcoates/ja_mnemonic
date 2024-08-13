@@ -56,7 +56,7 @@ def coverage_check():
         missing = []
         print("["+str(i*bucket_size).zfill(len(str(total))-1)+"]", end='')
         s = ""
-        for n in tqdm(range(i*bucket_size, (i+1)*bucket_size), leave=False):
+        for n in range(i*bucket_size, (i+1)*bucket_size):
             options = get_options(str(n).zfill(len(str(total))-1))
             if options:
                 s += OKGREEN + "O" + ENDC
