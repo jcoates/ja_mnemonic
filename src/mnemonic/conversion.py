@@ -2,7 +2,7 @@
 This file is used for converting from numbers to text and vice versa.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
 from pathlib import Path
 
@@ -108,7 +108,8 @@ def process_loanwords() -> Dict[int, List[Tuple[str, str]]]:
         for line in f:
             (english, japanese, _) = line.strip().split(",")
             index = kana_word_to_number(japanese)
-            results[index].append((japanese, english))
+            if (japanese, english) not in results[index]:
+                results[index].append((japanese, english))
     return results
 
 def process_jmdict() -> Dict[int, List[str]]:
@@ -125,8 +126,46 @@ def process_jmdict() -> Dict[int, List[str]]:
         for line in f:
             word = line.strip()
             index = kana_word_to_number(word)
-            results[index].append(word)
+            if word not in results[index]:
+                results[index].append(word)
         return results
+
+def process_jmnedict_names() -> Tuple[Dict[int, List[str]], Dict[int, List[str]]]:
+    """Parses two jmnedict name exports into two dictionaries.
+
+    Returns: (LastNameDict, FirstNameDict)
+
+    The idea is to be able to split a number into a last name and a first name
+    """
+    surnames = defaultdict(list)
+    # NB: Longest Surname was 23 characters long
+    with open(DATA_DIR / "jmnedict_surnames.csv", 'r') as f:
+        for line in f:
+            (kana, _kanji, english) = line.strip().split(",")
+            index = kana_word_to_number(kana)
+            if (kana, english) not in surnames[index]:
+                surnames[index].append((kana, english))
+
+    given_names = defaultdict(list)
+    # NB: Longest Given Name was 13 characters long
+    with open(DATA_DIR / "jmnedict_given_names.csv", 'r') as f:
+        for line in f:
+            (kana, _kanji, english) = line.strip().split(",")
+            index = kana_word_to_number(kana)
+            if (kana, english) not in given_names[index]:
+                given_names[index].append((kana, english))
+    return (surnames,given_names)
+
+def process_jmnedict_other() -> Dict[int, List[Tuple[str, str]]]:
+    """Processes the file in data called loanwords_garaigo_merged"""
+    results = defaultdict(list)
+    with open(DATA_DIR / "jmnedict_other_names.csv", 'r') as f:
+        for line in f:
+            (kana, _kanji, english) = line.strip().split(",")
+            index = kana_word_to_number(kana)
+            if (kana, english) not in results[index]:
+                results[index].append((kana, english))
+    return results
 
 def process_wiki_names() -> Tuple[Dict[int, List[str]], Dict[int, List[str]]]:
     """Parses two wiki name exports into two dictionaries.
@@ -141,18 +180,39 @@ def process_wiki_names() -> Tuple[Dict[int, List[str]], Dict[int, List[str]]]:
         for line in f:
             (english, _kanji, kana) = line.strip().split(",")
             index = kana_word_to_number(kana)
-            surnames[index].append((kana, english))
+            if (kana, english) not in surnames[index]:
+                surnames[index].append((kana, english))
     given_names = defaultdict(list)
     # NB: Longest Given Name was 8 characters long
     with open(DATA_DIR / "wiki_given_names_clean.csv", 'r') as f:
         for line in f:
             (english, _kanji, kana) = line.strip().split(",")
             index = kana_word_to_number(kana)
-            given_names[index].append((kana, english))
+            if (kana, english) not in given_names[index]:
+                given_names[index].append((kana, english))
     return (surnames,given_names)
 
-def num_to_name(number: str, surnames: Dict[str, List[str]], given_names: Dict[str, List[str]]) -> List[str]:
-    """Given a number, try to return a name for it.
+def num_to_any_name(number: str, surnames: Dict[str, List[Tuple[str,str]]], given_names: Dict[str, List[Tuple[str,str]]]) -> Optional[str]:
+    """Given a number, try to return a names for it.
+
+    We'll try to match the number to a name. Surname or Given.
+    Then we'll try every length split we can to make it from a
+    surname followed by a given name.
+    """
+    results = []
+    if number in given_names:
+        return given_names[number][0][0]
+    if number in surnames:
+        return surnames[number][0][0]
+    for i in range(1, len(number)):
+        sur = number[:i]
+        giv = number[i:]
+        if sur in surnames and giv in given_names:
+            return surnames[sur][0][0]+" "+given_names[giv][0][0]
+    return None
+
+def num_to_name(number: str, surnames: Dict[str, List[Tuple[str,str]]], given_names: Dict[str, List[Tuple[str,str]]]) -> List[str]:
+    """Given a number, try to return all names for it.
 
     We'll try to match the number to a name. Surname or Given.
     Then we'll try every length split we can to make it from a
@@ -174,8 +234,8 @@ def num_to_name(number: str, surnames: Dict[str, List[str]], given_names: Dict[s
                         results.append(new_name)
     return results
 
-def num_to_options(n, words_dict: Dict[str, List[str]], surnames: Dict[str, List[str]], given_names: Dict[str, List[str]]) -> List[str]:
-    """Tries to see if we can get any matches for a number.
+def num_to_options(n, words_dict: Dict[str, List[Tuple[str,str]]], surnames: Dict[str, List[Tuple[str,str]]], given_names: Dict[str, List[Tuple[str,str]]]) -> List[str]:
+    """Finds all the matches for a number.
 
     First we'll try the dictionary. Then the names. If we get nothing we return nothing.
 
@@ -188,3 +248,17 @@ def num_to_options(n, words_dict: Dict[str, List[str]], surnames: Dict[str, List
         results.extend(words_dict[n])
     results.extend(num_to_name(n, surnames, given_names))
     return results
+
+def num_to_any_option(n, words_dict: Dict[str, List[Tuple[str,str]]], surnames: Dict[str, List[Tuple[str,str]]], given_names: Dict[str, List[Tuple[str,str]]]) -> List[str]:
+    """Tries to see if we can get any matches for a number.
+
+    First we'll try the dictionary. Then the names. If we get nothing we return nothing.
+
+    Currently, this just returns results in order by words>given names>surnames> combos. We have no sense of frequency.
+
+    TODO: Add a frequency? Add a way to generate a bogus japanese word.
+    """
+    if n in words_dict:
+        return words_dict[n][0]
+
+    return num_to_any_name(n, surnames, given_names)
