@@ -1,9 +1,8 @@
 """
-This file is for checking what coverage my dictionary has over the numbers I might want to remember
+This file is for checking what coverage my dictionary has over the numbers one might want to remember
 """
 
-from typing import Dict, List
-from conversion import num_to_any_option, process_jmnedict_names, process_jmnedict_other, process_loanwords, process_jmdict, process_wiki_names
+from mnemonic.conversion import Converter
 
 """
 Some Coverage Records:
@@ -18,32 +17,9 @@ Some Coverage Records:
 9 digits: 2.88% [Also this took nearly half an hour]
 """
 
-def merge_dicts(*dicts: Dict[str, List[str]]) -> Dict[str, str]:
-    """A helper that combines dictionaries of strings to lists of string."""
-    keys = set()
-    for d in dicts:
-        keys = keys.union(d.keys())
-    r = {}
-    empty = []
-    for k in keys:
-        l = []
-        for d in dicts:
-            l += d.get(k, empty)
-        r[k] = l
-    return r
-
 def coverage_check():
     print("LOADING DICTIONARIES...")
-    wiki_surnames, wiki_given_names = process_wiki_names()
-    jmne_surnames, jmne_given_names = process_jmnedict_names()
-    loanwords_dict = process_loanwords()
-    jmdict = process_jmdict()
-    jmnedict = process_jmnedict_other()
-    surnames = merge_dicts(wiki_surnames, jmne_surnames)
-    given_names = merge_dicts(wiki_given_names, jmne_given_names)
-    words_dict = merge_dicts(loanwords_dict, jmdict, jmnedict)
-    def get_options(n):
-        return num_to_any_option(n, words_dict, surnames, given_names)
+    converter = Converter.build_default()
     OKGREEN = '\033[92m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
@@ -57,8 +33,8 @@ def coverage_check():
         print("["+str(i*bucket_size).zfill(len(str(total))-1)+"]", end='')
         s = ""
         for n in range(i*bucket_size, (i+1)*bucket_size):
-            options = get_options(str(n).zfill(len(str(total))-1))
-            if options:
+            maybe_name = converter.find_any_option(str(n).zfill(len(str(total))-1))
+            if maybe_name:
                 s += OKGREEN + "O" + ENDC
             else:
                 s += FAIL + "X" + ENDC

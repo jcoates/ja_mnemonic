@@ -73,18 +73,19 @@ def parse_jmnedict_xml():
         trans = child.findall('trans')
         # currently this is unused so not important
         kanji = ""
-        if child.find('k_ele'):
-            kanji = child.find('k_ele').find('keb').text
+        k_ele = child.find('k_ele')
+        if k_ele:
+            kanji = k_ele.find('keb').text # type: ignore (ignoring a none check as in our data this is always present)
         if not kanji:
             kanji = ""
-        readings = [r.find('reb').text for r in child.findall('r_ele')]
+        readings = [r.find('reb').text for r in child.findall('r_ele')] # type: ignore (see above)
         for t in trans:
             # There was one record with no name type, so leaving this here for safety
             if t.find('name_type') is None:
                 print(ET.tostring(t, encoding="unicode"))
                 continue
-            name_type = t.find('name_type').text
-            translation = t.find('trans_det').text.replace(',', ';').replace('"', "'")
+            name_type = t.find('name_type').text # type: ignore (see above)
+            translation = t.find('trans_det').text.replace(',', ';').replace('"', "'") # type: ignore (see above)
             if name_type == SURNAME_TYPE:
                 for r in readings:
                     surnames.append((r, kanji, translation))
