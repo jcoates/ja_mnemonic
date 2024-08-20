@@ -2,11 +2,36 @@
 This file is used for converting from numbers to text and vice versa.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from mnemonic.kana_mapper import digit_to_random_katakana
 from mnemonic.loaders import process_jmdict, process_jmnedict_names, process_jmnedict_other, process_loanwords, process_wiki_names
 from mnemonic.tenkeydict import TenKeyDict
+
+class NamesResponse():
+    given_names: List[str]
+    surnames: List[str]
+    full_names: List[str]
+
+    def __init__(self, given_names=[], surnames=[], full_names=[]):
+        self.given_names=given_names
+        self.surnames=surnames
+        self.full_names=full_names
+
+class OptionsResponse(NamesResponse):
+    words: List[str]
+
+    def __init__(self, words: List[str]=[], given_names: List[str]=[], surnames: List[str]=[], full_names: List[str]=[]) -> None:
+        self.words = words
+        self.given_names = given_names
+        self.surnames = surnames
+        self.full_names = full_names
+
+    @classmethod
+    def from_names(cls, nr: NamesResponse):
+        return cls(given_names=nr.given_names, surnames=nr.surnames, full_names=nr.full_names)
+
+
 
 class Converter():
 
@@ -60,18 +85,19 @@ class Converter():
 
         return self.find_any_name(n)
 
-    def find_all_names(self, number: str) -> List[str]:
+    def find_all_names(self, number: str) -> NamesResponse:
         """Given a number, try to return all names for it.
 
         We'll try to match the number to a name. Surname or Given.
         Then we'll try every length split we can to make it from a
         surname followed by a given name.
         """
-        results = []
+        results = NamesResponse()
         if number in self.given_names:
-            results.extend(g for g in self.given_names[number])
+            results.given_names = self.given_names[number]
         if number in self.surnames:
-            results.extend(s for s in self.surnames[number])
+            results.surnames = self.surnames[number]
+        results.full_names = []
         for i in range(1, len(number)):
             sur = number[:i]
             giv = number[i:]
@@ -79,11 +105,39 @@ class Converter():
                 for s in self.surnames[sur]:
                     for g in self.given_names[giv]:
                         new_name = s+" "+g
-                        if new_name not in results:
-                            results.append(new_name)
+                        if new_name not in results.full_names:
+                            results.full_names.append(new_name)
         return results
 
-    def find_all_options(self, n) -> List[str]:
+    def find_all_names_merged(self, n: str) -> List[str]:
+        """Given a number, try to return all names for it.
+
+        We'll try to match the number to a name. Surname or Given.
+        Then we'll try every length split we can to make it from a
+        surname followed by a given name.
+        """
+        r = self.find_all_names(n)
+        res = r.given_names
+        res.extend(r.surnames)
+        res.extend(r.full_names)
+        return res
+
+    def find_all_options_merged(self, n: str) -> List[str]:
+        """Finds all the matches for a number.
+
+        First we'll try the dictionary. Then the names. If we get nothing we return nothing.
+
+        Currently, this just returns results in order by words>given names>surnames> combos. We have no sense of frequency.
+        """
+        results = []
+        o = self.find_all_options(n)
+        results.extend(o.words)
+        results.extend(o.given_names)
+        results.extend(o.surnames)
+        results.extend(o.full_names)
+        return results
+
+    def find_all_options(self, n: str) -> OptionsResponse:
         """Finds all the matches for a number.
 
         First we'll try the dictionary. Then the names. If we get nothing we return nothing.
@@ -92,11 +146,13 @@ class Converter():
 
         TODO: Add a frequency
         """
-        results = []
+        names_r = self.find_all_names(n)
+        resp = OptionsResponse.from_names(names_r)
+
         if n in self.words:
-            results.extend(self.words[n])
-        results.extend(self.find_all_names(n))
-        return results
+            resp.words = self.words[n]
+
+        return resp
 
     @staticmethod
     def make_up_word(i: str) -> str:

@@ -30,6 +30,7 @@ def process_loanwords() -> TenKeyDict:
     file looks like: (third column always empty)
     TOBACCO,タバコ,
     """
+    #NB: The longest word is 45 characters long
     return process("loanwords_garaigo_merged.csv", lambda x: x.strip().split(',')[1])
 
 def process_jmdict() -> TenKeyDict:
@@ -43,6 +44,7 @@ def process_jmdict() -> TenKeyDict:
 
     TODO: Consider some means of ranking the words with the same number by popularity?
     """
+    # NB: longest word is 37 characters long
     return process("jmdict_reading_list.txt", lambda x: x.strip())
 
 def process_jmnedict_names() -> Tuple[TenKeyDict, TenKeyDict]:
@@ -70,6 +72,7 @@ def process_jmnedict_other() -> TenKeyDict:
     Format looks like:
     まるた,丸太,Maruta
     """
+    #NB: The longest word in this is 33 characters long
     return process("jmnedict_other_names.csv", lambda x: x.strip().split(',')[0])
 
 def process_wiki_names() -> Tuple[TenKeyDict, TenKeyDict]:

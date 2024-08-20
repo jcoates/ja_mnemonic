@@ -19,11 +19,14 @@ def main():
         try:
             if not i.isdigit():
                 raise ValueError()
-            result = converter.find_all_options(i)
-            if len(result) > 10:
-                result = result[0:5] + result[-5:]
-            print(f"[{','.join(a for a in result)}]")
-            if not result:
+            results = []
+            options = converter.find_all_options(i)
+            for l in [options.words, options.given_names, options.surnames, options.full_names]:
+                if len(l) > 5:
+                    results.extend(l[0:3])
+                    results.extend(l[-3:])
+            print(f"[{','.join(a for a in results)}]")
+            if not results:
                 print("NO MATCHING WORDS FOUND. YOUR WORD WOULD BE SOMETHING LIKE: " + converter.make_up_word(i))
         except ValueError:
             print(i + " IS NOT A NUMBER OR THE QUIT COMMAND, TRY AGAIN.")
